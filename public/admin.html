@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broker Plus - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #1e3c72;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #c82333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #1e3c72;
+            font-size: 20px;
+        }
+
+        .btn {
+            background: #2a5298;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background: #1e3c72;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            font-weight: 600;
+            color: #555;
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .invite-link {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #f8f9fa;
+        }
+
+        .tab.active {
+            border-bottom-color: #2a5298;
+            color: #2a5298;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Broker Plus - Admin</h1>
+            <div class="user-info">
+                <span id="userEmail"></span>
+                <button class="btn-logout" onclick="logout()">Esci</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Utenti Totali</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeUsers">0</div>
+                <div class="stat-label">Utenti Attivi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPolicies">0</div>
+                <div class="stat-label">Pratiche Totali</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingInvites">0</div>
+                <div class="stat-label">Inviti in Sospeso</div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="section">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('users')">Gestione Utenti</div>
+                <div class="tab" onclick="switchTab('policies')">Tutte le Pratiche</div>
+            </div>
+
+            <!-- Users Tab -->
+            <div class="tab-content active" id="users-tab">
+                <div class="section-header">
+                    <h2>Gestione Contraenti</h2>
+                    <button class="btn" onclick="showInviteModal()">+ Invita Contraente</button>
+                </div>
+                <div id="usersTableContainer">
+                    <div class="loading">Caricamento...</div>
+                </div>
+            </div>
+
+            <!-- Policies Tab -->
+            <div class="tab-content" id="policies-tab">
+                <div class="section-header">
+                    <h2>Tutte le Pratiche</h2>
+                </div>
+                <div id="policiesTableContainer">
+                    <div class="loading">Caricamento...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div class="modal" id="inviteModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeInviteModal()">&times;</span>
+            <h2>Invita Nuovo Contraente</h2>
+            <form id="inviteForm">
+                <div class="form-group">
+                    <label for="inviteEmail">Email</label>
+                    <input type="email" id="inviteEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="companyName">Nome Azienda</label>
+                    <input type="text" id="companyName" required>
+                </div>
+                <button type="submit" class="btn">Invia Invito</button>
+            </form>
+            <div id="inviteResult" style="display: none; margin-top: 20px;">
+                <p style="color: #28a745; font-weight: 500;">Invito inviato con successo!</p>
+                <p style="margin-top: 10px;">Link di invito (per test):</p>
+                <div class="invite-link" id="inviteLink"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+
+        let users = [];
+        let policies = [];
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || user.role !== 'admin') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            document.getElementById('userEmail').textContent = user.email;
+            loadDashboard();
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            await Promise.all([
+                loadUsers(),
+                loadPolicies()
+            ]);
+            updateStats();
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load users');
+                
+                users = await response.json();
+                renderUsersTable();
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTableContainer').innerHTML = 
+                    '<div class="empty-state">Errore nel caricamento utenti</div>';
+            }
+        }
+
+        // Load all policies
+        async function loadPolicies() {
+            try {
+                const response = await fetch(`${API_URL}/api/policies`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load policies');
+                
+                policies = await response.json();
+                renderPoliciesTable();
+            } catch (error) {
+                console.error('Error loading policies:', error);
+                document.getElementById('policiesTableContainer').innerHTML = 
+                    '<div class="empty-state">Errore nel caricamento pratiche</div>';
+            }
+        }
+
+        // Render users table
+        function renderUsersTable() {
+            const container = document.getElementById('usersTableContainer');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nessun utente registrato</div>';
+                return;
+            }
+
+            const table = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Azienda</th>
+                            <th>Ruolo</th>
+                            <th>Stato</th>
+                            <th>Data Registrazione</th>
+                            <th>Ultimo Accesso</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.email}</td>
+                                <td>${user.company_name || '-'}</td>
+                                <td>${user.role === 'admin' ? 'Amministratore' : 'Contraente'}</td>
+                                <td>
+                                    <span class="status-badge status-${user.status}">
+                                        ${user.status === 'active' ? 'Attivo' : 'In attesa'}
+                                    </span>
+                                </td>
+                                <td>${new Date(user.created_at).toLocaleDateString('it-IT')}</td>
+                                <td>${user.last_login ? new Date(user.last_login).toLocaleDateString('it-IT') : '-'}</td>
+                                <td>
+                                    ${user.role !== 'admin' ? 
+                                        `<button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Elimina</button>` 
+                                        : '-'
+                                    }
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        // Render policies table
+        function renderPoliciesTable() {
+            const container = document.getElementById('policiesTableContainer');
+            
+            if (policies.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nessuna pratica registrata</div>';
+                return;
+            }
+
+            const table = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Numero Polizza</th>
+                            <th>Contraente</th>
+                            <th>Azienda</th>
+                            <th>Tipologia</th>
+                            <th>Importo</th>
+                            <th>Data Creazione</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${policies.map(policy => `
+                            <tr>
+                                <td>${policy.policy_number}</td>
+                                <td>${policy.user_email || policy.contraente_cf}</td>
+                                <td>${policy.company_name || '-'}</td>
+                                <td>${policy.tipologia}</td>
+                                <td>€ ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
+                                <td>${new Date(policy.created_at).toLocaleDateString('it-IT')}</td>
+                                <td>
+                                    <span class="status-badge status-${policy.status === 'active' ? 'active' : 'pending'}">
+                                        ${policy.status === 'active' ? 'Attiva' : 'Bozza'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+            document.getElementById('totalPolicies').textContent = policies.length;
+            document.getElementById('pendingInvites').textContent = users.filter(u => u.status === 'pending').length;
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        // Invite modal
+        function showInviteModal() {
+            document.getElementById('inviteModal').style.display = 'block';
+            document.getElementById('inviteResult').style.display = 'none';
+            document.getElementById('inviteForm').reset();
+        }
+
+        function closeInviteModal() {
+            document.getElementById('inviteModal').style.display = 'none';
+        }
+
+        // Handle invite form
+        document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('inviteEmail').value;
+            const companyName = document.getElementById('companyName').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/invite`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ email, companyName })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to send invite');
+                }
+
+                const data = await response.json();
+                
+                // Show invite link (for testing)
+                document.getElementById('inviteResult').style.display = 'block';
+                document.getElementById('inviteLink').textContent = data.inviteLink;
+                
+                // Reload users
+                await loadUsers();
+                updateStats();
+            } catch (error) {
+                alert('Errore: ' + error.message);
+            }
+        });
+
+        // Delete user
+        async function deleteUser(userId) {
+            if (!confirm('Sei sicuro di voler eliminare questo utente?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to delete user');
+                
+                await loadUsers();
+                updateStats();
+            } catch (error) {
+                alert('Errore durante l\'eliminazione');
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // Initialize
+        checkAuth();
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('inviteModal');
+            if (event.target === modal) {
+                closeInviteModal();
+            }
+        }
+    </script>
+</body>
+</html>
