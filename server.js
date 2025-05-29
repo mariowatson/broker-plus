@@ -266,11 +266,11 @@ app.post('/api/admin/invite', authenticateToken, isAdmin, async (req, res) => {
     );
 
     // In production, send email here
-    const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/set-password.html?token=${token}`;
+    const inviteLink = `${process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://broker-plus.onrender.com' : 'http://localhost:3001')}/set-password.html?token=${token}&email=${encodeURIComponent(email)}`;
     
     res.json({ 
       message: 'Invitation sent successfully',
-      inviteLink, // Remove this in production
+      // inviteLink, // Commented for production - uncomment for local testing
       userId: userResult.rows[0].id
     });
   } catch (error) {
