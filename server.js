@@ -221,6 +221,20 @@ async function runMigrationIfNeeded() {
     } else {
       console.log('Database is up to date - no migration needed');
     }
+    
+    // ALWAYS run this to fix the intermediario field size
+    console.log('Checking intermediario column type...');
+    try {
+      await pool.query('ALTER TABLE policies ALTER COLUMN intermediario TYPE TEXT');
+      console.log('Updated intermediario column to TEXT type');
+    } catch (error) {
+      if (error.code === '42710') {
+        console.log('Intermediario column is already TEXT type');
+      } else {
+        console.error('Error updating intermediario column:', error.message);
+      }
+    }
+    
   } catch (error) {
     console.error('Migration check error:', error);
   }
@@ -657,7 +671,8 @@ app.get('/api/migrate-db', authenticateToken, isAdmin, async (req, res) => {
       'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_provincia VARCHAR(5)',
       'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_pec VARCHAR(255)',
       'ALTER TABLE policies ADD COLUMN IF NOT EXISTS luogo_esecuzione VARCHAR(255)',
-      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS costo_aggiudicazione DECIMAL(12, 2)'
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS costo_aggiudicazione DECIMAL(12, 2)',
+      'ALTER TABLE policies ALTER COLUMN intermediario TYPE TEXT'
     ];
 
     for (const query of alterQueries) {
