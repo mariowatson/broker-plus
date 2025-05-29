@@ -297,7 +297,7 @@ app.post('/api/admin/invite', authenticateToken, isAdmin, async (req, res) => {
     
     res.json({ 
       message: 'Invitation sent successfully',
-      // inviteLink, // Commented for production - uncomment for local testing
+      inviteLink, // Now always included so you can share it manually
       userId: userResult.rows[0].id
     });
   } catch (error) {
@@ -359,33 +359,68 @@ app.get('/api/policies', authenticateToken, async (req, res) => {
 app.post('/api/policies', authenticateToken, async (req, res) => {
   try {
     const {
+      // Contraente fields
+      contraente_nome,
       contraente_cf,
-      intermediario,
+      contraente_via,
+      contraente_citta,
+      contraente_cap,
+      contraente_provincia,
+      contraente_pec,
+      
+      // Beneficiario fields
+      beneficiario_nome,
+      beneficiario_cf,
+      beneficiario_via,
+      beneficiario_citta,
+      beneficiario_cap,
+      beneficiario_provincia,
+      beneficiario_pec,
+      
+      // Contract details
       oggetto,
+      luogo_esecuzione,
+      costo_aggiudicazione,
       tipologia,
-      firma_digitale,
+      numero_polizza,
+      
+      // Financial fields
       importo,
       decorrenza,
       scadenza,
       tasso_lordo,
       diritti,
-      premio_firma
+      premio_firma,
+      
+      // Legacy fields
+      intermediario,
+      firma_digitale
     } = req.body;
 
-    // Generate unique policy number
-    const policyNumber = `POL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Generate unique policy number if not provided
+    const policyNumber = numero_polizza || `POL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const result = await pool.query(
       `INSERT INTO policies (
-        user_id, policy_number, contraente_cf, intermediario, oggetto, 
-        tipologia, firma_digitale, importo, decorrenza, scadenza, 
-        tasso_lordo, diritti, premio_firma
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+        user_id, policy_number, numero_polizza,
+        contraente_nome, contraente_cf, contraente_via, contraente_citta, 
+        contraente_cap, contraente_provincia, contraente_pec,
+        beneficiario_nome, beneficiario_cf, beneficiario_via, beneficiario_citta,
+        beneficiario_cap, beneficiario_provincia, beneficiario_pec,
+        oggetto, luogo_esecuzione, costo_aggiudicazione, tipologia,
+        importo, decorrenza, scadenza, tasso_lordo, diritti, premio_firma,
+        intermediario, firma_digitale
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) 
       RETURNING *`,
       [
-        req.user.id, policyNumber, contraente_cf, intermediario, oggetto,
-        tipologia, firma_digitale, importo, decorrenza, scadenza,
-        tasso_lordo, diritti, premio_firma
+        req.user.id, policyNumber, numero_polizza,
+        contraente_nome, contraente_cf, contraente_via, contraente_citta,
+        contraente_cap, contraente_provincia, contraente_pec,
+        beneficiario_nome, beneficiario_cf, beneficiario_via, beneficiario_citta,
+        beneficiario_cap, beneficiario_provincia, beneficiario_pec,
+        oggetto, luogo_esecuzione, costo_aggiudicazione, tipologia,
+        importo, decorrenza, scadenza, tasso_lordo, diritti, premio_firma,
+        intermediario, firma_digitale
       ]
     );
 
