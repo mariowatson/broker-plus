@@ -17,7 +17,13 @@ app.use(express.static('public'));
 // Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 10000,
+});
+
+// Add error handling for database
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
 });
 
 // JWT Secret
@@ -50,6 +56,24 @@ const isAdmin = (req, res, next) => {
 // Initialize database tables
 async function initializeDatabase() {
   try {
+    // First, check if the policies table exists and add numero_polizza column if needed
+    const tableExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'policies'
+      );
+    `);
+
+    if (tableExists.rows[0].exists) {
+      // Add the numero_polizza column if it doesn't exist
+      await pool.query(`
+        ALTER TABLE policies 
+        ADD COLUMN IF NOT EXISTS numero_polizza VARCHAR(50)
+      `);
+      console.log('Checked/added numero_polizza column to existing policies table');
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -144,10 +168,26 @@ async function initializeDatabase() {
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);
+    throw error; // Re-throw to handle in the main initialization
   }
 }
 
 // Routes
+
+// Root route - redirect to login
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT
+  });
+});
 
 // Login
 app.post('/api/auth/login', async (req, res) => {
@@ -374,16 +414,27 @@ app.post('/api/policies', authenticateToken, async (req, res) => {
 
     // Generate unique policy number
     const policyNumber = `POL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    // Parse extended data from intermediario if it exists
+    let numeroPolizza = null;
+    if (intermediario && intermediario.startsWith('{')) {
+      try {
+        const extData = JSON.parse(intermediario);
+        numeroPolizza = extData.numero_polizza || null;
+      } catch (e) {
+        console.log('No extended data in intermediario');
+      }
+    }
 
     const result = await pool.query(
       `INSERT INTO policies (
-        user_id, policy_number, contraente_cf, intermediario, oggetto, 
+        user_id, policy_number, numero_polizza, contraente_cf, intermediario, oggetto, 
         tipologia, firma_digitale, importo, decorrenza, scadenza, 
         tasso_lordo, diritti, premio_firma
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
       RETURNING *`,
       [
-        req.user.id, policyNumber, contraente_cf, intermediario, oggetto,
+        req.user.id, policyNumber, numeroPolizza, contraente_cf, intermediario, oggetto,
         tipologia, firma_digitale, importo, decorrenza, scadenza,
         tasso_lordo, diritti, premio_firma
       ]
@@ -497,10 +548,30 @@ app.get('/api/migrate-db', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Start server
-initializeDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Admin login: ${process.env.ADMIN_EMAIL || 'admin@broker.com'}`);
-  });
+// Catch-all route for any unmatched routes - MUST BE LAST
+app.get('*', (req, res) => {
+  // Check if it's an API route that wasn't found
+  if (req.path.startsWith('/api/')) {
+    res.status(404).json({ error: 'API endpoint not found' });
+  } else {
+    // For any other routes, redirect to login
+    res.redirect('/login.html');
+  }
 });
+
+// Start server
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Admin login: ${process.env.ADMIN_EMAIL || 'admin@broker.com'}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to initialize:', err);
+    // Don't exit in production, just log the error
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+  });
