@@ -140,7 +140,7 @@ async function initializeDatabase() {
         premio_firma DECIMAL(10, 2),
         
         -- Legacy fields for compatibility
-        intermediario VARCHAR(255),
+        intermediario TEXT,
         firma_digitale BOOLEAN DEFAULT false,
         
         status VARCHAR(50) DEFAULT 'draft',
@@ -169,6 +169,60 @@ async function initializeDatabase() {
   } catch (error) {
     console.error('Database initialization error:', error);
     throw error; // Re-throw to handle in the main initialization
+  }
+}
+
+// Run database migration if needed
+async function runMigrationIfNeeded() {
+  try {
+    console.log('Checking if migration is needed...');
+    
+    // Check if numero_polizza column exists
+    const checkColumn = await pool.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'policies' 
+      AND column_name = 'numero_polizza'
+    `);
+    
+    if (checkColumn.rows.length === 0) {
+      console.log('Running database migration...');
+      
+      // Add all the new columns
+      const alterQueries = [
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS numero_polizza VARCHAR(50)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_nome VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_via VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_citta VARCHAR(100)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_cap VARCHAR(10)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_provincia VARCHAR(5)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_pec VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_nome VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_cf VARCHAR(50)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_via VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_citta VARCHAR(100)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_cap VARCHAR(10)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_provincia VARCHAR(5)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_pec VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS luogo_esecuzione VARCHAR(255)',
+        'ALTER TABLE policies ADD COLUMN IF NOT EXISTS costo_aggiudicazione DECIMAL(12, 2)'
+      ];
+
+      for (const query of alterQueries) {
+        try {
+          await pool.query(query);
+          console.log(`Executed: ${query.substring(0, 50)}...`);
+        } catch (err) {
+          console.error(`Failed to execute: ${query}`, err.message);
+        }
+      }
+      
+      console.log('Migration completed successfully');
+    } else {
+      console.log('Database is up to date - no migration needed');
+    }
+  } catch (error) {
+    console.error('Migration check error:', error);
   }
 }
 
@@ -395,7 +449,7 @@ app.get('/api/policies', authenticateToken, async (req, res) => {
   }
 });
 
-// Create policy
+// Create policy - UPDATED VERSION
 app.post('/api/policies', authenticateToken, async (req, res) => {
   try {
     const {
@@ -416,34 +470,103 @@ app.post('/api/policies', authenticateToken, async (req, res) => {
     const policyNumber = `POL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
     // Parse extended data from intermediario if it exists
+    let extendedData = {};
     let numeroPolizza = null;
-    if (intermediario && intermediario.startsWith('{')) {
-      try {
-        const extData = JSON.parse(intermediario);
-        numeroPolizza = extData.numero_polizza || null;
-      } catch (e) {
-        console.log('No extended data in intermediario');
+    
+    try {
+      if (intermediario && intermediario.startsWith('{')) {
+        extendedData = JSON.parse(intermediario);
+        numeroPolizza = extendedData.numero_polizza || null;
       }
+    } catch (e) {
+      console.log('No extended data in intermediario');
     }
 
-    const result = await pool.query(
-      `INSERT INTO policies (
-        user_id, policy_number, numero_polizza, contraente_cf, intermediario, oggetto, 
-        tipologia, firma_digitale, importo, decorrenza, scadenza, 
-        tasso_lordo, diritti, premio_firma
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
-      RETURNING *`,
-      [
-        req.user.id, policyNumber, numeroPolizza, contraente_cf, intermediario, oggetto,
-        tipologia, firma_digitale, importo, decorrenza, scadenza,
-        tasso_lordo, diritti, premio_firma
-      ]
-    );
-
-    res.json(result.rows[0]);
+    // First, let's check if all the new columns exist
+    const checkColumnsQuery = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'policies' 
+      AND column_name IN ('numero_polizza', 'contraente_nome', 'beneficiario_nome')
+    `;
+    
+    const columnsResult = await pool.query(checkColumnsQuery);
+    const existingColumns = columnsResult.rows.map(row => row.column_name);
+    
+    // If we have all the new columns, use them
+    if (existingColumns.includes('numero_polizza') && existingColumns.includes('contraente_nome')) {
+      // Use the new schema with all columns
+      const result = await pool.query(
+        `INSERT INTO policies (
+          user_id, policy_number, numero_polizza, 
+          contraente_nome, contraente_cf, contraente_via, contraente_citta, 
+          contraente_cap, contraente_provincia, contraente_pec,
+          beneficiario_nome, beneficiario_cf, beneficiario_via, beneficiario_citta,
+          beneficiario_cap, beneficiario_provincia, beneficiario_pec,
+          oggetto, luogo_esecuzione, costo_aggiudicazione, tipologia,
+          firma_digitale, importo, decorrenza, scadenza, 
+          tasso_lordo, diritti, premio_firma, intermediario
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) 
+        RETURNING *`,
+        [
+          req.user.id, 
+          policyNumber, 
+          numeroPolizza || extendedData.numero_polizza,
+          extendedData.contraente_nome || null,
+          contraente_cf,
+          extendedData.contraente_via || null,
+          extendedData.contraente_citta || null,
+          extendedData.contraente_cap || null,
+          extendedData.contraente_provincia || null,
+          extendedData.contraente_pec || null,
+          extendedData.beneficiario_nome || null,
+          extendedData.beneficiario_cf || null,
+          extendedData.beneficiario_via || null,
+          extendedData.beneficiario_citta || null,
+          extendedData.beneficiario_cap || null,
+          extendedData.beneficiario_provincia || null,
+          extendedData.beneficiario_pec || null,
+          oggetto,
+          extendedData.luogo_esecuzione || null,
+          extendedData.costo_aggiudicazione || null,
+          tipologia,
+          firma_digitale || false,
+          importo,
+          decorrenza,
+          scadenza,
+          tasso_lordo || 1,
+          diritti || 0,
+          premio_firma,
+          intermediario
+        ]
+      );
+      
+      res.json(result.rows[0]);
+    } else {
+      // Fall back to the original schema (without the new columns)
+      console.log('Using fallback schema - new columns not found');
+      
+      const result = await pool.query(
+        `INSERT INTO policies (
+          user_id, policy_number, contraente_cf, intermediario, oggetto, 
+          tipologia, firma_digitale, importo, decorrenza, scadenza, 
+          tasso_lordo, diritti, premio_firma
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+        RETURNING *`,
+        [
+          req.user.id, policyNumber, contraente_cf, intermediario, oggetto,
+          tipologia, firma_digitale || false, importo, decorrenza, scadenza,
+          tasso_lordo || 1, diritti || 0, premio_firma
+        ]
+      );
+      
+      res.json(result.rows[0]);
+    }
   } catch (error) {
     console.error('Create policy error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error details:', error.message);
+    console.error('Error code:', error.code);
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
@@ -559,8 +682,9 @@ app.get('*', (req, res) => {
   }
 });
 
-// Start server
+// Start server with migration check
 initializeDatabase()
+  .then(() => runMigrationIfNeeded())
   .then(() => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
