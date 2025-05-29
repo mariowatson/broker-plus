@@ -831,12 +831,15 @@
             doc.text('TOTALE EURO', 145, y + 5);
             
             doc.setFont('helvetica', 'normal');
-            const premioNetto = parseFloat(policy.premio_firma) - parseFloat(policy.diritti || 0);
+            // FIX: Ensure all values are numbers before calculations
+            const premioFirma = parseFloat(policy.premio_firma) || 0;
+            const diritti = parseFloat(policy.diritti) || 0;
+            const premioNetto = premioFirma - diritti;
             const imposte = premioNetto * 0.225; // 22.5% tax
-            const totale = parseFloat(policy.premio_firma);
+            const totale = premioFirma;
             
             doc.text(`€ ${premioNetto.toFixed(2)}`, 25, y + 12);
-            doc.text(`€ ${(policy.diritti || 0).toFixed(2)}`, 55, y + 12);
+            doc.text(`€ ${diritti.toFixed(2)}`, 55, y + 12);
             doc.text(`€ ${premioNetto.toFixed(2)}`, 85, y + 12);
             doc.text(`€ ${imposte.toFixed(2)}`, 115, y + 12);
             doc.text(`€ ${totale.toFixed(2)}`, 145, y + 12);
