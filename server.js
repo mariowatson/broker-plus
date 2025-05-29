@@ -359,68 +359,33 @@ app.get('/api/policies', authenticateToken, async (req, res) => {
 app.post('/api/policies', authenticateToken, async (req, res) => {
   try {
     const {
-      // Contraente fields
-      contraente_nome,
       contraente_cf,
-      contraente_via,
-      contraente_citta,
-      contraente_cap,
-      contraente_provincia,
-      contraente_pec,
-      
-      // Beneficiario fields
-      beneficiario_nome,
-      beneficiario_cf,
-      beneficiario_via,
-      beneficiario_citta,
-      beneficiario_cap,
-      beneficiario_provincia,
-      beneficiario_pec,
-      
-      // Contract details
+      intermediario,
       oggetto,
-      luogo_esecuzione,
-      costo_aggiudicazione,
       tipologia,
-      numero_polizza,
-      
-      // Financial fields
+      firma_digitale,
       importo,
       decorrenza,
       scadenza,
       tasso_lordo,
       diritti,
-      premio_firma,
-      
-      // Legacy fields
-      intermediario,
-      firma_digitale
+      premio_firma
     } = req.body;
 
-    // Generate unique policy number if not provided
-    const policyNumber = numero_polizza || `POL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Generate unique policy number
+    const policyNumber = `POL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const result = await pool.query(
       `INSERT INTO policies (
-        user_id, policy_number, numero_polizza,
-        contraente_nome, contraente_cf, contraente_via, contraente_citta, 
-        contraente_cap, contraente_provincia, contraente_pec,
-        beneficiario_nome, beneficiario_cf, beneficiario_via, beneficiario_citta,
-        beneficiario_cap, beneficiario_provincia, beneficiario_pec,
-        oggetto, luogo_esecuzione, costo_aggiudicazione, tipologia,
-        importo, decorrenza, scadenza, tasso_lordo, diritti, premio_firma,
-        intermediario, firma_digitale
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) 
+        user_id, policy_number, contraente_cf, intermediario, oggetto, 
+        tipologia, firma_digitale, importo, decorrenza, scadenza, 
+        tasso_lordo, diritti, premio_firma
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
       RETURNING *`,
       [
-        req.user.id, policyNumber, numero_polizza,
-        contraente_nome, contraente_cf, contraente_via, contraente_citta,
-        contraente_cap, contraente_provincia, contraente_pec,
-        beneficiario_nome, beneficiario_cf, beneficiario_via, beneficiario_citta,
-        beneficiario_cap, beneficiario_provincia, beneficiario_pec,
-        oggetto, luogo_esecuzione, costo_aggiudicazione, tipologia,
-        importo, decorrenza, scadenza, tasso_lordo, diritti, premio_firma,
-        intermediario, firma_digitale
+        req.user.id, policyNumber, contraente_cf, intermediario, oggetto,
+        tipologia, firma_digitale, importo, decorrenza, scadenza,
+        tasso_lordo, diritti, premio_firma
       ]
     );
 
@@ -495,6 +460,40 @@ app.delete('/api/policies/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Delete policy error:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Temporary migration endpoint - REMOVE AFTER RUNNING
+app.get('/api/migrate-db', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    // Add new columns if they don't exist
+    const alterQueries = [
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS numero_polizza VARCHAR(50)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_nome VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_via VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_citta VARCHAR(100)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_cap VARCHAR(10)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_provincia VARCHAR(5)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS contraente_pec VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_nome VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_cf VARCHAR(50)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_via VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_citta VARCHAR(100)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_cap VARCHAR(10)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_provincia VARCHAR(5)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS beneficiario_pec VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS luogo_esecuzione VARCHAR(255)',
+      'ALTER TABLE policies ADD COLUMN IF NOT EXISTS costo_aggiudicazione DECIMAL(12, 2)'
+    ];
+
+    for (const query of alterQueries) {
+      await pool.query(query);
+    }
+
+    res.json({ message: 'Database migrated successfully' });
+  } catch (error) {
+    console.error('Migration error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

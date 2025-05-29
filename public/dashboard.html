@@ -545,11 +545,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${policies.map(policy => `
+                        ${policies.map(policy => {
+                            // Parse extended data
+                            let displayName = policy.contraente_cf;
+                            let beneficiarioNome = 'N/A';
+                            try {
+                                if (policy.intermediario && policy.intermediario.startsWith('{')) {
+                                    const extData = JSON.parse(policy.intermediario);
+                                    displayName = extData.contraente_nome || policy.contraente_cf;
+                                    beneficiarioNome = extData.beneficiario_nome || 'N/A';
+                                }
+                            } catch (e) {}
+                            
+                            return `
                             <tr>
-                                <td>${policy.numero_polizza || policy.policy_number}</td>
-                                <td>${policy.contraente_nome || policy.contraente_cf}</td>
-                                <td>${policy.beneficiario_nome || 'N/A'}</td>
+                                <td>${policy.policy_number}</td>
+                                <td>${displayName}</td>
+                                <td>${beneficiarioNome}</td>
                                 <td>${policy.tipologia}</td>
                                 <td>€ ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
                                 <td>${new Date(policy.scadenza).toLocaleDateString('it-IT')}</td>
@@ -560,7 +572,7 @@
                                     </div>
                                 </td>
                             </tr>
-                        `).join('')}
+                        `}).join('')}
                     </tbody>
                 </table>
             `;
@@ -617,20 +629,17 @@
             e.preventDefault();
             
             // Generate policy number if not set
-            const numeroPolizza = document.getElementById('numeroPolizza').value || 
-                                 `LUC${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
+            const numeroPolizza = `LUC${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
             
-            const formData = {
-                // Contraente data
+            // Collect all form data
+            const extendedData = {
+                numero_polizza: numeroPolizza,
                 contraente_nome: document.getElementById('contraente').value,
-                contraente_cf: document.getElementById('contraenteCF').value,
                 contraente_via: document.getElementById('contraenteVia').value,
                 contraente_citta: document.getElementById('contraenteCitta').value,
                 contraente_cap: document.getElementById('contraenteCap').value,
                 contraente_provincia: document.getElementById('contraenteProvincia').value,
                 contraente_pec: document.getElementById('contraentePec').value,
-                
-                // Beneficiario data
                 beneficiario_nome: document.getElementById('beneficiario').value,
                 beneficiario_cf: document.getElementById('beneficiarioCF').value,
                 beneficiario_via: document.getElementById('beneficiarioVia').value,
@@ -638,26 +647,23 @@
                 beneficiario_cap: document.getElementById('beneficiarioCap').value,
                 beneficiario_provincia: document.getElementById('beneficiarioProvincia').value,
                 beneficiario_pec: document.getElementById('beneficiarioPec').value,
-                
-                // Contract details
-                oggetto: document.getElementById('oggetto').value,
                 luogo_esecuzione: document.getElementById('luogoEsecuzione').value,
-                costo_aggiudicazione: parseFloat(document.getElementById('costoAggiudicazione').value),
+                costo_aggiudicazione: parseFloat(document.getElementById('costoAggiudicazione').value)
+            };
+            
+            // Create form data that works with existing database
+            const formData = {
+                contraente_cf: document.getElementById('contraenteCF').value,
+                intermediario: JSON.stringify(extendedData), // Store extended data here
+                oggetto: document.getElementById('oggetto').value,
                 tipologia: document.getElementById('tipologia').value,
-                numero_polizza: numeroPolizza,
-                
-                // Financial details
+                firma_digitale: false,
                 importo: parseFloat(document.getElementById('importo').value),
                 decorrenza: document.getElementById('decorrenza').value,
                 scadenza: document.getElementById('scadenza').value,
                 tasso_lordo: parseFloat(document.getElementById('tassoLordo').value) || 1,
                 diritti: parseFloat(document.getElementById('diritti').value) || 0,
-                premio_firma: parseFloat(document.getElementById('premioFirma').value),
-                
-                // Keep these for backward compatibility
-                contraente_cf: document.getElementById('contraenteCF').value,
-                intermediario: 'N/A', // Not in new form
-                firma_digitale: false
+                premio_firma: parseFloat(document.getElementById('premioFirma').value)
             };
 
             try {
@@ -699,9 +705,18 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
+            // Parse extended data from intermediario field
+            let extData = {};
+            try {
+                if (policy.intermediario && policy.intermediario.startsWith('{')) {
+                    extData = JSON.parse(policy.intermediario);
+                }
+            } catch (e) {
+                console.log('No extended data found');
+            }
+            
             // Helper function for Italian number to text
             function numeroInLettere(num) {
-                // Simplified - in production use a proper library
                 return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "/00";
             }
             
@@ -728,7 +743,7 @@
             doc.text('Garanzia Fidejussoria N.', 140, y + 7);
             doc.setFont('helvetica', 'normal');
             doc.text('Lucura Versicherungs AG', 25, y + 14);
-            doc.text(policy.numero_polizza || policy.policy_number, 140, y + 14);
+            doc.text(extData.numero_polizza || policy.policy_number, 140, y + 14);
             doc.text('Città: Ludwigshafen a. Rhein', 25, y + 21);
             doc.text('Via: GARTENWEG 12 A + B', 70, y + 21);
             doc.text('Cap: 67063', 140, y + 21);
@@ -741,9 +756,107 @@
             doc.setFont('helvetica', 'bold');
             doc.text('Contraente (Obbligato principale)', 25, y + 7);
             doc.setFont('helvetica', 'normal');
-            doc.text(policy.contraente_nome || 'N/A', 25, y + 14);
-            doc.text(`CITTÀ: ${policy.contraente_citta || ''}`, 25, y + 21);
-            doc.text(`VIA: ${policy.contraente_via || ''}`, 70, y + 21);
+            doc.text(extData.contraente_nome || 'N/A', 25, y + 14);
+            doc.text(`CITTÀ: ${extData.contraente_citta || ''}`, 25, y + 21);
+            doc.text(`VIA: ${extData.contraente_via || ''}`, 70, y + 21);
+            doc.text(`CAP: ${extData.contraente_cap || ''}`, 25, y + 28);
+            doc.text(`PROVINCIA: ${extData.contraente_provincia || ''}`, 70, y + 28);
+            doc.text(`CODICE FISCALE: ${policy.contraente_cf}`, 25, y + 35);
+            doc.text(`PEC: ${extData.contraente_pec || ''}`, 100, y + 35);
+            
+            // Beneficiario section
+            y += 40;
+            doc.rect(20, y, 170, 35);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Stazione appaltante (Beneficiario)', 25, y + 7);
+            doc.setFont('helvetica', 'normal');
+            doc.text(extData.beneficiario_nome || 'N/A', 25, y + 14);
+            doc.text(`CITTÀ: ${extData.beneficiario_citta || ''}`, 25, y + 21);
+            doc.text(`VIA: ${extData.beneficiario_via || ''}`, 70, y + 21);
+            doc.text(`CAP: ${extData.beneficiario_cap || ''}`, 25, y + 28);
+            doc.text(`PROVINCIA: ${extData.beneficiario_provincia || ''}`, 70, y + 28);
+            doc.text(`CODICE FISCALE: ${extData.beneficiario_cf || ''}`, 25, y + 35);
+            doc.text(`PEC: ${extData.beneficiario_pec || ''}`, 100, y + 35);
+            
+            // Contract details
+            y += 40;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Descrizione Opera/Servizio/Fornitura', 20, y);
+            doc.setFont('helvetica', 'normal');
+            y += 5;
+            const oggettoLines = doc.splitTextToSize(policy.oggetto || '', 170);
+            doc.text(oggettoLines, 20, y);
+            
+            y += oggettoLines.length * 5 + 5;
+            doc.text(`Luogo di esecuzione: ${extData.luogo_esecuzione || ''}`, 20, y);
+            
+            y += 10;
+            doc.text(`COSTO AGGIUDICAZIONE €: ${parseFloat(extData.costo_aggiudicazione || 0).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
+            doc.text(`(in lettere): ${numeroInLettere(extData.costo_aggiudicazione || 0)}`, 20, y + 5);
+            
+            y += 15;
+            doc.text(`Valore capitale dell'anticipazione concessa: € ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
+            doc.text(`Tasso interesse: ${policy.tasso_lordo || 1}%`, 120, y);
+            
+            y += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Somma garantita €: ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
+            doc.text(`(in lettere): ${numeroInLettere(policy.importo)}`, 20, y + 5);
+            
+            // Dates
+            y += 15;
+            doc.setFont('helvetica', 'normal');
+            doc.text(`DECORRENZA CONTRATTO: ${new Date(policy.decorrenza).toLocaleDateString('it-IT')}`, 20, y);
+            doc.text(`SCADENZA CONTRATTO: ${new Date(policy.scadenza).toLocaleDateString('it-IT')}`, 100, y);
+            
+            // Premium table
+            y += 15;
+            doc.text(`Tasso applicato al Premio ${policy.tasso_lordo || 1}%`, 20, y);
+            doc.text('Frazionamento del premio: Premio unico', 20, y + 5);
+            
+            y += 15;
+            // Premium table
+            doc.rect(20, y, 170, 20);
+            doc.line(50, y, 50, y + 20);
+            doc.line(80, y, 80, y + 20);
+            doc.line(110, y, 110, y + 20);
+            doc.line(140, y, 140, y + 20);
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PREMIO NETTO', 25, y + 5);
+            doc.text('ACCESSORI', 55, y + 5);
+            doc.text('IMPONIBILE', 85, y + 5);
+            doc.text('IMPOSTE', 115, y + 5);
+            doc.text('TOTALE EURO', 145, y + 5);
+            
+            doc.setFont('helvetica', 'normal');
+            const premioNetto = parseFloat(policy.premio_firma) - parseFloat(policy.diritti || 0);
+            const imposte = premioNetto * 0.225; // 22.5% tax
+            const totale = parseFloat(policy.premio_firma);
+            
+            doc.text(`€ ${premioNetto.toFixed(2)}`, 25, y + 12);
+            doc.text(`€ ${(policy.diritti || 0).toFixed(2)}`, 55, y + 12);
+            doc.text(`€ ${premioNetto.toFixed(2)}`, 85, y + 12);
+            doc.text(`€ ${imposte.toFixed(2)}`, 115, y + 12);
+            doc.text(`€ ${totale.toFixed(2)}`, 145, y + 12);
+            
+            // Footer
+            y = 270;
+            doc.setFontSize(8);
+            doc.text(`Emessa in 3 esemplari ad un solo effetto il ${new Date().toLocaleDateString('it-IT')} in Ludwigshafen a. Rhein, Germany`, 20, y);
+            
+            // Save the PDF
+            const fileName = `Polizza_${extData.numero_polizza || policy.policy_number}_${policy.contraente_cf}.pdf`;
+            doc.save(fileName);
+        }VIA: ${policyData.contraente_via}`, 70, y + 21);
+            doc.text(`CAP: ${policyData.contraente_cap}`, 25, y + 28);
+            doc.text(`PROVINCIA: ${policyData.contraente_provincia}`, 70, y + 28);
+            doc.text(`CODICE FISCALE: ${policyData.contraente_cf}`, 25, y + 35);
+            doc.text(`PEC: ${policyData.contraente_pec}`, 100, y + 35);
+            
+            // Continue with rest of PDF generation...
+            // (Rest of the PDF generation code remains the same, just use policyData instead of policy)VIA: ${policy.contraente_via || ''}`, 70, y + 21);
             doc.text(`CAP: ${policy.contraente_cap || ''}`, 25, y + 28);
             doc.text(`PROVINCIA: ${policy.contraente_provincia || ''}`, 70, y + 28);
             doc.text(`CODICE FISCALE: ${policy.contraente_cf}`, 25, y + 35);
