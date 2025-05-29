@@ -237,12 +237,14 @@
         }
 
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
+            font-family: inherit;
         }
 
         .checkbox-group {
@@ -326,38 +328,109 @@
                     <h3>Informazioni Principali</h3>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="contraente">Contraente (Codice Fiscale)</label>
+                            <label for="contraente">Contraente (Ragione Sociale)</label>
                             <input type="text" id="contraente" required>
                         </div>
                         <div class="form-group">
-                            <label for="intermediario">Intermediario</label>
-                            <input type="text" id="intermediario" required>
+                            <label for="contraenteCF">Contraente (P.IVA/C.F.)</label>
+                            <input type="text" id="contraenteCF" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="oggetto">Oggetto</label>
-                            <input type="text" id="oggetto" required>
+                            <label for="contraenteVia">Via/Indirizzo</label>
+                            <input type="text" id="contraenteVia" required>
                         </div>
+                        <div class="form-group">
+                            <label for="contraenteCitta">Città</label>
+                            <input type="text" id="contraenteCitta" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contraenteCap">CAP</label>
+                            <input type="text" id="contraenteCap" maxlength="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contraenteProvincia">Provincia</label>
+                            <input type="text" id="contraenteProvincia" maxlength="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contraentePec">PEC</label>
+                            <input type="email" id="contraentePec" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Beneficiario (Stazione Appaltante)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="beneficiario">Denominazione</label>
+                            <input type="text" id="beneficiario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="beneficiarioCF">C.F./P.IVA</label>
+                            <input type="text" id="beneficiarioCF" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="beneficiarioVia">Via/Indirizzo</label>
+                            <input type="text" id="beneficiarioVia" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="beneficiarioCitta">Città</label>
+                            <input type="text" id="beneficiarioCitta" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="beneficiarioCap">CAP</label>
+                            <input type="text" id="beneficiarioCap" maxlength="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="beneficiarioProvincia">Provincia</label>
+                            <input type="text" id="beneficiarioProvincia" maxlength="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="beneficiarioPec">PEC</label>
+                            <input type="email" id="beneficiarioPec" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Dettagli Appalto</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oggetto">Descrizione Opera/Servizio/Fornitura</label>
+                            <textarea id="oggetto" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="luogoEsecuzione">Luogo di esecuzione</label>
+                            <input type="text" id="luogoEsecuzione" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="costoAggiudicazione">Costo Aggiudicazione (€)</label>
+                            <input type="number" id="costoAggiudicazione" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="tipologia">Tipologia</label>
                             <select id="tipologia" required>
                                 <option value="">Seleziona...</option>
-                                <option value="appalti-pubblici-anticipazione">Appalti Pubblici - Anticipazione</option>
-                                <option value="appalti-pubblici-definitiva">Appalti Pubblici - Definitiva</option>
-                                <option value="appalti-pubblici-generica">Appalti Pubblici - Generica</option>
-                                <option value="appalti-pubblici-provvisoria">Appalti Pubblici - Provvisoria</option>
-                                <option value="appalti-pubblici-rata-saldo">Appalti Pubblici - Rata di saldo</option>
-                                <option value="garanzie-contratto">Garanzie di contratto</option>
+                                <option value="anticipazione">Polizza Fidejussoria Anticipazione</option>
+                                <option value="definitiva">Polizza Fidejussoria Definitiva</option>
+                                <option value="provvisoria">Polizza Fidejussoria Provvisoria</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="firmaDigitale">
-                                <label for="firmaDigitale">Firma Digitale</label>
-                            </div>
+                            <label for="numeroPolizza">Numero Polizza</label>
+                            <input type="text" id="numeroPolizza" placeholder="Auto-generato" readonly>
                         </div>
                     </div>
                 </div>
@@ -463,10 +536,10 @@
                     <thead>
                         <tr>
                             <th>Numero Polizza</th>
-                            <th>Contraente CF</th>
+                            <th>Contraente</th>
+                            <th>Beneficiario</th>
                             <th>Tipologia</th>
                             <th>Importo</th>
-                            <th>Decorrenza</th>
                             <th>Scadenza</th>
                             <th>Azioni</th>
                         </tr>
@@ -474,11 +547,11 @@
                     <tbody>
                         ${policies.map(policy => `
                             <tr>
-                                <td>${policy.policy_number}</td>
-                                <td>${policy.contraente_cf}</td>
+                                <td>${policy.numero_polizza || policy.policy_number}</td>
+                                <td>${policy.contraente_nome || policy.contraente_cf}</td>
+                                <td>${policy.beneficiario_nome || 'N/A'}</td>
                                 <td>${policy.tipologia}</td>
                                 <td>€ ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
-                                <td>${new Date(policy.decorrenza).toLocaleDateString('it-IT')}</td>
                                 <td>${new Date(policy.scadenza).toLocaleDateString('it-IT')}</td>
                                 <td>
                                     <div class="policy-actions">
@@ -543,18 +616,48 @@
         document.getElementById('policyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Generate policy number if not set
+            const numeroPolizza = document.getElementById('numeroPolizza').value || 
+                                 `LUC${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
+            
             const formData = {
-                contraente_cf: document.getElementById('contraente').value,
-                intermediario: document.getElementById('intermediario').value,
+                // Contraente data
+                contraente_nome: document.getElementById('contraente').value,
+                contraente_cf: document.getElementById('contraenteCF').value,
+                contraente_via: document.getElementById('contraenteVia').value,
+                contraente_citta: document.getElementById('contraenteCitta').value,
+                contraente_cap: document.getElementById('contraenteCap').value,
+                contraente_provincia: document.getElementById('contraenteProvincia').value,
+                contraente_pec: document.getElementById('contraentePec').value,
+                
+                // Beneficiario data
+                beneficiario_nome: document.getElementById('beneficiario').value,
+                beneficiario_cf: document.getElementById('beneficiarioCF').value,
+                beneficiario_via: document.getElementById('beneficiarioVia').value,
+                beneficiario_citta: document.getElementById('beneficiarioCitta').value,
+                beneficiario_cap: document.getElementById('beneficiarioCap').value,
+                beneficiario_provincia: document.getElementById('beneficiarioProvincia').value,
+                beneficiario_pec: document.getElementById('beneficiarioPec').value,
+                
+                // Contract details
                 oggetto: document.getElementById('oggetto').value,
+                luogo_esecuzione: document.getElementById('luogoEsecuzione').value,
+                costo_aggiudicazione: parseFloat(document.getElementById('costoAggiudicazione').value),
                 tipologia: document.getElementById('tipologia').value,
-                firma_digitale: document.getElementById('firmaDigitale').checked,
+                numero_polizza: numeroPolizza,
+                
+                // Financial details
                 importo: parseFloat(document.getElementById('importo').value),
                 decorrenza: document.getElementById('decorrenza').value,
                 scadenza: document.getElementById('scadenza').value,
                 tasso_lordo: parseFloat(document.getElementById('tassoLordo').value) || 1,
                 diritti: parseFloat(document.getElementById('diritti').value) || 0,
-                premio_firma: parseFloat(document.getElementById('premioFirma').value)
+                premio_firma: parseFloat(document.getElementById('premioFirma').value),
+                
+                // Keep these for backward compatibility
+                contraente_cf: document.getElementById('contraenteCF').value,
+                intermediario: 'N/A', // Not in new form
+                firma_digitale: false
             };
 
             try {
@@ -596,54 +699,162 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Generate document numbers
-            const bozzaNum = Math.floor(Math.random() * 100000);
-            const praticaNum = policy.policy_number.split('-')[1] || '000000';
+            // Helper function for Italian number to text
+            function numeroInLettere(num) {
+                // Simplified - in production use a proper library
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "/00";
+            }
             
-            // PDF generation code (same as before)
-            // Header disclaimer
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            const disclaimerText = 'Il presente documento ha una validità di 30 giorni e serve unicamente per consentire al destinatario di conoscere i prodotti e servizi offerti da DALLBOGG.';
-            const disclaimerLines = doc.splitTextToSize(disclaimerText, 140);
-            doc.text(disclaimerLines, 20, 15);
+            // Page 1 - Header and main content
+            let y = 20;
             
-            // Title
-            doc.setFontSize(11);
+            // Schema header
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('POLIZZA FIDEIUSSORIA PROVVISORIA', 105, 35, { align: 'center' });
+            doc.text('SCHEMA TIPO 1.3', 20, y);
+            doc.text('POLIZZA FIDEJUSSORIA PER L\'ANTICIPAZIONE', 105, y, { align: 'center' });
             
-            // Document info
-            doc.setFontSize(9);
+            y += 10;
             doc.setFont('helvetica', 'normal');
-            doc.text(`Bozza appendice nr. 1 - Polizza ${policy.policy_number}`, 20, 50);
+            doc.setFontSize(9);
+            doc.text('La presente Scheda Tecnica costituisce parte integrante della garanzia fidejussoria conforme dello Schema Tipo 1.3', 20, y);
+            doc.text('di cui al D.M. 16 settembre 2022 n. 193.', 20, y + 5);
             
-            // Company info boxes
-            doc.rect(20, 60, 170, 20);
-            doc.text('Garante: INSURANCE JSC DallBogg', 25, 70);
+            // Garante section
+            y += 20;
+            doc.rect(20, y, 170, 30);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Garante', 25, y + 7);
+            doc.text('Garanzia Fidejussoria N.', 140, y + 7);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Lucura Versicherungs AG', 25, y + 14);
+            doc.text(policy.numero_polizza || policy.policy_number, 140, y + 14);
+            doc.text('Città: Ludwigshafen a. Rhein', 25, y + 21);
+            doc.text('Via: GARTENWEG 12 A + B', 70, y + 21);
+            doc.text('Cap: 67063', 140, y + 21);
+            doc.text('Codice Fiscale: DET3104.HRB5267', 25, y + 28);
+            doc.text('PEC: lucura@pecimprese.it', 90, y + 28);
             
-            doc.rect(20, 85, 170, 25);
-            doc.text('CONTRAENTE', 25, 92);
-            doc.text(`Codice Fiscale: ${policy.contraente_cf}`, 25, 98);
-            doc.text(`Intermediario: ${policy.intermediario}`, 25, 104);
+            // Contraente section
+            y += 35;
+            doc.rect(20, y, 170, 35);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Contraente (Obbligato principale)', 25, y + 7);
+            doc.setFont('helvetica', 'normal');
+            doc.text(policy.contraente_nome || 'N/A', 25, y + 14);
+            doc.text(`CITTÀ: ${policy.contraente_citta || ''}`, 25, y + 21);
+            doc.text(`VIA: ${policy.contraente_via || ''}`, 70, y + 21);
+            doc.text(`CAP: ${policy.contraente_cap || ''}`, 25, y + 28);
+            doc.text(`PROVINCIA: ${policy.contraente_provincia || ''}`, 70, y + 28);
+            doc.text(`CODICE FISCALE: ${policy.contraente_cf}`, 25, y + 35);
+            doc.text(`PEC: ${policy.contraente_pec || ''}`, 100, y + 35);
             
-            doc.rect(20, 115, 170, 20);
-            doc.text('BENEFICIARIO: Comune di Casagiove', 25, 125);
+            // Beneficiario section
+            y += 40;
+            doc.rect(20, y, 170, 35);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Stazione appaltante (Beneficiario)', 25, y + 7);
+            doc.setFont('helvetica', 'normal');
+            doc.text(policy.beneficiario_nome || 'N/A', 25, y + 14);
+            doc.text(`CITTÀ: ${policy.beneficiario_citta || ''}`, 25, y + 21);
+            doc.text(`VIA: ${policy.beneficiario_via || ''}`, 70, y + 21);
+            doc.text(`CAP: ${policy.beneficiario_cap || ''}`, 25, y + 28);
+            doc.text(`PROVINCIA: ${policy.beneficiario_provincia || ''}`, 70, y + 28);
+            doc.text(`CODICE FISCALE: ${policy.beneficiario_cf || ''}`, 25, y + 35);
+            doc.text(`PEC: ${policy.beneficiario_pec || ''}`, 100, y + 35);
             
-            // Policy details
-            doc.text(`Oggetto: ${policy.oggetto}`, 20, 145);
-            doc.text(`Tipologia: ${policy.tipologia}`, 20, 152);
-            doc.text(`Importo: € ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, 159);
-            doc.text(`Decorrenza: ${new Date(policy.decorrenza).toLocaleDateString('it-IT')}`, 20, 166);
-            doc.text(`Scadenza: ${new Date(policy.scadenza).toLocaleDateString('it-IT')}`, 20, 173);
+            // Contract details
+            y += 40;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Descrizione Opera/Servizio/Fornitura', 20, y);
+            doc.setFont('helvetica', 'normal');
+            y += 5;
+            const oggettoLines = doc.splitTextToSize(policy.oggetto || '', 170);
+            doc.text(oggettoLines, 20, y);
             
-            // Premio table
-            doc.rect(20, 185, 170, 20);
-            doc.text('PREMIO TOTALE', 25, 195);
-            doc.text(`€ ${parseFloat(policy.premio_firma).toFixed(2)}`, 150, 195);
+            y += oggettoLines.length * 5 + 5;
+            doc.text(`Luogo di esecuzione: ${policy.luogo_esecuzione || ''}`, 20, y);
             
-            // Save PDF
-            const fileName = `Bozza_${bozzaNum}_Pratica_${policy.policy_number}.pdf`;
+            y += 10;
+            doc.text(`COSTO AGGIUDICAZIONE €: ${parseFloat(policy.costo_aggiudicazione || 0).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
+            doc.text(`(in lettere): ${numeroInLettere(policy.costo_aggiudicazione || 0)}`, 20, y + 5);
+            
+            y += 15;
+            doc.text(`Valore capitale dell'anticipazione concessa: € ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
+            doc.text(`Tasso interesse: ${policy.tasso_lordo || 1}%`, 120, y);
+            
+            y += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Somma garantita €: ${parseFloat(policy.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
+            doc.text(`(in lettere): ${numeroInLettere(policy.importo)}`, 20, y + 5);
+            
+            // Dates
+            y += 15;
+            doc.setFont('helvetica', 'normal');
+            doc.text(`DECORRENZA CONTRATTO: ${new Date(policy.decorrenza).toLocaleDateString('it-IT')}`, 20, y);
+            doc.text(`SCADENZA CONTRATTO: ${new Date(policy.scadenza).toLocaleDateString('it-IT')}`, 100, y);
+            
+            // Premium table
+            y += 15;
+            doc.text(`Tasso applicato al Premio ${policy.tasso_lordo || 1}%`, 20, y);
+            doc.text('Frazionamento del premio: Premio unico', 20, y + 5);
+            
+            y += 15;
+            // Premium table headers
+            doc.rect(20, y, 170, 20);
+            doc.line(50, y, 50, y + 20);
+            doc.line(80, y, 80, y + 20);
+            doc.line(110, y, 110, y + 20);
+            doc.line(140, y, 140, y + 20);
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PREMIO NETTO', 25, y + 5);
+            doc.text('ACCESSORI', 55, y + 5);
+            doc.text('IMPONIBILE', 85, y + 5);
+            doc.text('IMPOSTE', 115, y + 5);
+            doc.text('TOTALE EURO', 145, y + 5);
+            
+            doc.setFont('helvetica', 'normal');
+            const premioNetto = parseFloat(policy.premio_firma) - parseFloat(policy.diritti || 0);
+            const imposte = premioNetto * 0.225; // 22.5% tax rate for insurance
+            const totale = parseFloat(policy.premio_firma);
+            
+            doc.text(`€ ${premioNetto.toFixed(2)}`, 25, y + 12);
+            doc.text(`€ ${(policy.diritti || 0).toFixed(2)}`, 55, y + 12);
+            doc.text(`€ ${premioNetto.toFixed(2)}`, 85, y + 12);
+            doc.text(`€ ${imposte.toFixed(2)}`, 115, y + 12);
+            doc.text(`€ ${totale.toFixed(2)}`, 145, y + 12);
+            
+            // Footer
+            y = 270;
+            doc.setFontSize(8);
+            doc.text(`Emessa in 3 esemplari ad un solo effetto il ${new Date().toLocaleDateString('it-IT')} in Ludwigshafen a. Rhein, Germany`, 20, y);
+            
+            // Page 2 - Legal terms (Articles 1-9)
+            doc.addPage();
+            y = 20;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('SCHEMA TIPO 1.3 (D.M. 193/2022) GARANZIA FIDEJUSSORIA PER L\'ANTICIPAZIONE', 105, y, { align: 'center' });
+            
+            y += 10;
+            doc.setFontSize(10);
+            doc.text('Condizioni che rilevano nel rapporto tra Stazione appaltante e Garante', 105, y, { align: 'center' });
+            
+            // Add articles (shortened for brevity - in production, add all articles)
+            y += 15;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Art. 1 - Oggetto della garanzia', 20, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            y += 5;
+            const art1Text = 'Il Garante si impegna nei confronti della Stazione appaltante, nei limiti della somma garantita indicata nella Scheda Tecnica, alla restituzione, totale o parziale, dell\'anticipazione non recuperata...';
+            const art1Lines = doc.splitTextToSize(art1Text, 170);
+            doc.text(art1Lines, 20, y);
+            
+            // Save the PDF
+            const fileName = `Polizza_${policy.numero_polizza || policy.policy_number}_${policy.contraente_cf}.pdf`;
             doc.save(fileName);
         }
 

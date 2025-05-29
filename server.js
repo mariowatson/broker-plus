@@ -81,17 +81,44 @@ async function initializeDatabase() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
         policy_number VARCHAR(100) UNIQUE NOT NULL,
+        numero_polizza VARCHAR(50),
+        
+        -- Contraente fields
+        contraente_nome VARCHAR(255),
         contraente_cf VARCHAR(50),
-        intermediario VARCHAR(255),
+        contraente_via VARCHAR(255),
+        contraente_citta VARCHAR(100),
+        contraente_cap VARCHAR(10),
+        contraente_provincia VARCHAR(5),
+        contraente_pec VARCHAR(255),
+        
+        -- Beneficiario fields
+        beneficiario_nome VARCHAR(255),
+        beneficiario_cf VARCHAR(50),
+        beneficiario_via VARCHAR(255),
+        beneficiario_citta VARCHAR(100),
+        beneficiario_cap VARCHAR(10),
+        beneficiario_provincia VARCHAR(5),
+        beneficiario_pec VARCHAR(255),
+        
+        -- Contract details
         oggetto TEXT,
+        luogo_esecuzione VARCHAR(255),
+        costo_aggiudicazione DECIMAL(12, 2),
         tipologia VARCHAR(100),
-        firma_digitale BOOLEAN DEFAULT false,
-        importo DECIMAL(10, 2),
+        
+        -- Financial fields
+        importo DECIMAL(12, 2),
         decorrenza DATE,
         scadenza DATE,
         tasso_lordo DECIMAL(5, 2),
         diritti DECIMAL(10, 2),
         premio_firma DECIMAL(10, 2),
+        
+        -- Legacy fields for compatibility
+        intermediario VARCHAR(255),
+        firma_digitale BOOLEAN DEFAULT false,
+        
         status VARCHAR(50) DEFAULT 'draft',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
